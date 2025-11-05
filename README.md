@@ -4,44 +4,79 @@
 
 ---
 
-## `Tabla estados` ##
-
-| Desde Estado | A Estado     | Acción                                   | Función / Lógica Resultante                                                                 |
-|---------------|--------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| [∗]           | INICIO       | Carga inicial                                            | El juego se inicializa.                                                                      |
-| INICIO        | SECUENCIA    | click_start (Botón START/RESET)                          | Llama a `VM.inicializaJuego();` comienza la secuencia.                                       |
-| SECUENCIA     | ESPERANDO    | iniciar_ronda (Dentro de `VM.aumentarSecuencia()`)       | El ViewModel (VM) empieza a mostrar la secuencia: `VM.mostrarSecuencia()` (flashes de color). |
-| ESPERANDO     | ENTRADA      | secuencia_mostrada (Fin de `VM.mostrarSecuencia()`)      | La secuencia se ha terminado de mostrar. El juego se habilita para recibir la entrada del usuario. |
-| ENTRADA       | COMPROBANDO  | click_color (Botón de color pulsado)                     | Llama a `VM.aumentarSecuenciaUsuario()` para registrar la entrada del usuario.               |
-| COMPROBANDO   | SECUENCIA    | verificar_click (Clic correcto, y secuencia completada)  | El juego avanza a la siguiente ronda, añadiendo un nuevo color a la secuencia.               |
-| COMPROBANDO   | FINALIZADO   | secuencia_incorrecta (Clic incorrecto)                   | El juego termina inmediatamente.                                                             |
-| FINALIZADO    | INICIO       | click_reset (Botón START/RESET)                          | Reinicia el juego al estado inicial.                                                         |
-
----
-
 ## `Diagrama estados` ##
 
 ```mermaid
 
-stateDiagram-v2
-    
-    [*] --> INICIO : Carga inicial
-
-    INICIO --> SECUENCIA : click_start (Botón START/RESET)
-    SECUENCIA --> ESPERANDO : iniciar_ronda (Dentro de VM.aumentarSecuencia())
-    ESPERANDO --> ENTRADA : secuencia_mostrada (Fin de VM.mostrarSecuencia())
-    ENTRADA --> COMPROBANDO : click_color (Botón de color pulsado)
-    
-    COMPROBANDO --> SECUENCIA : verificar_click (Clic correcto, y secuencia completada)
-    COMPROBANDO --> FINALIZADO : secuencia_incorrecta (Clic incorrecto)
-    
-    FINALIZADO --> INICIO : click_reset (Botón START/RESET)
-    
-    INICIO : El juego se inicializa.
-    SECUENCIA : VM.mostrarSecuencia() (Flashes de color).
-    ESPERANDO : El sistema está esperando a que termine la secuencia.
-    ENTRADA : El juego se habilita para recibir la entrada del usuario.
-    COMPROBANDO : Verifica la entrada del usuario.
-    FINALIZADO : El juego ha terminado.
+flowchart TD
+    A[*] --> B[INICIO]
+    B -->|click_start| C[SECUENCIA]
+    C -->|mostrarSecuencia| D[ESPERANDO]
+    D -->|click_color aumentarSecuenciaUsuario| E[ENTRADA]
+    E -->|correcto incompleto status=ESPERANDO| D
+    E -->|incorrecto finalizaJuego| F[FINALIZADO]
+    F -->|click_reset| B
+    E -->|correcto completo aumentarSecuencia| C
 
 ```
+
+---
+
+## `Diagrama flujo` ##
+
+```mermaid
+flowchart TD
+    A[Inicio App] --> B[Pantalla Principal]
+    B --> C{Estado del Juego}
+    
+    C -->|INICIO| D[Boton START visible]
+    C -->|SECUENCIA| E[Mostrar Secuencia]
+    C -->|ESPERANDO| F[Esperar Input Usuario]
+    C -->|ENTRADA| G[Procesar Input]
+    C -->|FINALIZADO| H[Game Over]
+    
+    D --> I[Usuario pulsa START]
+    I --> J[Inicializar Juego]
+    J --> K[Reset variables<br/>ronda=0, secuencia vacía]
+    K --> L[Aumentar Secuencia]
+    
+    L --> M[Generar color aleatorio]
+    M --> N[Añadir a secuencia]
+    N --> E
+    
+    E --> O[Mostrar secuencia completa<br/>con flashes]
+    O --> P[Mostrar pista texto<br/>último color 2 segundos]
+    P --> F
+    
+    F --> Q{Usuario pulsa color}
+    Q --> R[Flash feedback color]
+    R --> G
+    
+    G --> S[Añadir a secuencia usuario]
+    S --> T{Comprobar secuencia}
+    
+    T -->|Correcto| U{¿Secuencia completa?}
+    T -->|Incorrecto| H
+    
+    U -->|No| F
+    U -->|Sí| V[¡Ronda superada!]
+    
+    V --> W{¿Nuevo récord?}
+    W -->|Sí| X[Actualizar récord]
+    W -->|No| Y[Continuar juego]
+    X --> Y
+    Y --> L
+    
+    H --> Z[Mostrar Game Over<br/>y Toast con récord]
+    Z --> D
+    
+    %% Estilos
+    style A fill:#4CAF50,color:white
+    style H fill:#f44336,color:white
+    style V fill:#2196F3,color:white
+    style D fill:#FF9800,color:white
+```
+
+
+
+
